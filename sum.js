@@ -1,1 +1,0 @@
-console.log(`Hey ${process.env.USER}, ${5} + ${6} = ${5 + 6}.`);
