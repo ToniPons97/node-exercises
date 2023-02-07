@@ -1,4 +1,4 @@
-const isEven = require('./isEven');
+import isEven from "./isEven.js";
 
 const n = 5;
 console.log(`${n} ${isEven(n) ? 'is even.' : 'is not even.'}`);

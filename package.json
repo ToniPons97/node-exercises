@@ -1,0 +1,20 @@
+{
+  "name": "repo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ToniPons97/node-exercises.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ToniPons97/node-exercises/issues"
+  },
+  "homepage": "https://github.com/ToniPons97/node-exercises#readme",
+  "type": "module"
+}
