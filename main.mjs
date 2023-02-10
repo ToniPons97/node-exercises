@@ -1,3 +1,5 @@
+import chalk from 'chalk';
+
 function luckyDraw(player) {
     return new Promise((resolve, reject) => {
       const win = Boolean(Math.round(Math.random()));
@@ -12,8 +14,15 @@ function luckyDraw(player) {
     });
 }
 
-const getResults = async (player) => luckyDraw(player).then(value => value).catch(err => err);
+const getResults = async (player) => {
+    try {
+        const draw = await luckyDraw(player);
+        console.log(chalk.bgGreen(draw));
+    } catch (e) {
+        console.error(chalk.bgRed(e));
+    }
+}
 
-console.log(await getResults('Tina'));
-console.log(await getResults('Jorge'));
-console.log(await getResults('Julien'));
+getResults('Tina');
+getResults('Jorge');
+getResults('Julien');
