@@ -1,4 +1,5 @@
 import { json, Request, Response } from "express";
+import Joi, { valid } from "joi";
 
 type JsonResponse = {
     msg: string
@@ -17,6 +18,11 @@ let planets: Planets = [
     { id: 2, name: 'Venus' }
 ];
 
+const planetSchema = Joi.object({
+    id: Joi.number().integer().required(),
+    name: Joi.string().required()
+});
+
 const isPlanetPresent = (id: string): Planet | undefined => planets.find(p => p.id === Number(id));
 
 const getAll = (req: Request, res: Response) => res.status(200).json(planets);
@@ -34,8 +40,14 @@ const create = (req: Request, res: Response) => {
         res.status(303).json(jsonMessage('Planet already exists.'));
     } else {
         const newPlanet: Planet = { id: Number(id), name };
-        planets = [...planets, newPlanet];
-        res.status(201).json(jsonMessage('Planet created.'));
+        const validatePlanet = planetSchema.validate(newPlanet);
+
+        if (validatePlanet.error) {
+            res.status(400).json(validatePlanet.error.message);
+        } else {
+            planets = [...planets, newPlanet];
+            res.status(201).json(jsonMessage('Planet created.'));
+        }
     }
 }
 
@@ -44,8 +56,15 @@ const updateById = (req: Request, res: Response) => {
     const { name } = req.body;
 
     if (isPlanetPresent(id)) {
-        planets = planets.map(p => p.id === Number(id) ? {...p, name} : {...p});
-        res.status(200).json(jsonMessage('Planet updated.'));
+
+        const validatePlanet = planetSchema.validate({ id: Number(id), name });
+
+        if (validatePlanet.error) {
+            res.status(400).json(validatePlanet.error.message);
+        } else {
+            planets = planets.map(p => p.id === Number(id) ? {...p, name} : {...p});
+            res.status(200).json(jsonMessage('Planet updated.'));
+        }
     } else {
         res.status(400).json(jsonMessage('Planet not present in DB.'));
     }
