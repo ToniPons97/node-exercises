@@ -1,5 +1,5 @@
-import { json, Request, Response } from "express";
-import Joi, { valid } from "joi";
+import { Request, Response } from "express";
+import Joi from "joi";
 
 type JsonResponse = {
     msg: string
