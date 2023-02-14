@@ -1,84 +1,86 @@
 import { Request, Response } from "express";
 import Joi from "joi";
+import pgPromise from "pg-promise";
+import dotenv from 'dotenv';
 
 type JsonResponse = {
     msg: string
 }
 const jsonMessage = (msg: string): JsonResponse => ({msg});
 
-type Planet = {
-    id: number,
-    name: string
+
+dotenv.config();
+const ENV = {
+    DBNAME: process.env.DBNAME, 
+    DBUSER: process.env.DBUSER, 
+    DBPORT: process.env.DBPORT
+};
+
+const db = pgPromise()(`postgres://${ENV.DBUSER}:postgres@localhost:${ENV.DBPORT}/${ENV.DBNAME}`);
+
+const setupDb = async () => {
+    await db.none(`
+        DROP TABLE IF EXISTS planets;
+        CREATE TABLE planets (
+            id SERIAL NOT NULL PRIMARY KEY,
+            name TEXT NOT NULL
+        );
+    `);
+
+    await db.none(`INSERT INTO planets (name) VALUES ('Mercury');`);
+    await db.none(`INSERT INTO planets (name) VALUES ('Venus');`);
 }
 
-type Planets = Planet[];
-
-let planets: Planets = [
-    { id: 1, name: 'Mercury' },
-    { id: 2, name: 'Venus' }
-];
+setupDb();
 
 const planetSchema = Joi.object({
-    id: Joi.number().integer().required(),
     name: Joi.string().required()
 });
 
-const isPlanetPresent = (id: string): Planet | undefined => planets.find(p => p.id === Number(id));
 
-const getAll = (req: Request, res: Response) => res.status(200).json(planets);
-const getOneById = (req: Request, res: Response) => {
+const getAll = async (req: Request, res: Response) => {
+    const planets = await db.many(`SELECT * FROM planets`);
+    res.status(200).json(planets);
+};
+const getOneById = async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const foundPlanet = isPlanetPresent(id);
-    foundPlanet ? res.status(200).json(foundPlanet) : res.status(404).json(jsonMessage('Planet not found.'));
+    const planet = await db.oneOrNone(`SELECT * FROM planets WHERE id=$1`, Number(id));
+    res.status(200).json(planet);
 }
 
-const create = (req: Request, res: Response) => {
-    const { id, name } = req.body;
+const create = async (req: Request, res: Response) => {
+    const { name } = req.body;
 
-    if (isPlanetPresent(id)) {
-        res.status(303).json(jsonMessage('Planet already exists.'));
+    const newPlanet = { name };
+    const validatePlanet = planetSchema.validate(newPlanet);
+
+    if (validatePlanet.error) {
+        res.status(400).json(jsonMessage(validatePlanet.error.message));
     } else {
-        const newPlanet: Planet = { id: Number(id), name };
-        const validatePlanet = planetSchema.validate(newPlanet);
-
-        if (validatePlanet.error) {
-            res.status(400).json(validatePlanet.error.message);
-        } else {
-            planets = [...planets, newPlanet];
-            res.status(201).json(jsonMessage('Planet created.'));
-        }
+        await db.none(`INSERT INTO planets (name) VALUES ($1)`, name);
+        res.status(201).json(jsonMessage('Planet created.'));
     }
 }
 
-const updateById = (req: Request, res: Response) => {
+const updateById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name } = req.body;
 
-    if (isPlanetPresent(id)) {
-
-        const validatePlanet = planetSchema.validate({ id: Number(id), name });
-
-        if (validatePlanet.error) {
-            res.status(400).json(validatePlanet.error.message);
-        } else {
-            planets = planets.map(p => p.id === Number(id) ? {...p, name} : {...p});
-            res.status(200).json(jsonMessage('Planet updated.'));
-        }
+    const validatePlanet = planetSchema.validate({ name });
+    if (validatePlanet.error) {
+        res.status(400).json(validatePlanet.error.message);
     } else {
-        res.status(400).json(jsonMessage('Planet not present in DB.'));
-    }
+        await db.none(`UPDATE planets SET name = $2 WHERE id = $1`, [Number(id), name]);
+        res.status(200).json(jsonMessage('Planet updated.'));
+    }    
 }
 
-const deleteByID = (req: Request, res: Response) => {
+const deleteByID = async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    if (isPlanetPresent(id)) {
-        planets = planets.filter(p => p.id !== Number(id));
-        res.status(200).json(jsonMessage('Planet deleted.'));
-    } else {
-        res.status(400).json(jsonMessage('Planet not present in DB.'));
-    }
+    await db.none(`DELETE FROM planets WHERE id = $1`, Number(id));
+    res.status(200).json(jsonMessage('Planet deleted.'));
 }
 
 export {
