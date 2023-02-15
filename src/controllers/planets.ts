@@ -1,43 +1,16 @@
 import { Request, Response } from "express";
 import Joi from "joi";
-import pgPromise from "pg-promise";
-import dotenv from 'dotenv';
+import db from '../db.js';
 
 type JsonResponse = {
     msg: string
 }
+
 const jsonMessage = (msg: string): JsonResponse => ({msg});
-
-
-dotenv.config();
-const ENV = {
-    DBNAME: process.env.DBNAME, 
-    DBUSER: process.env.DBUSER, 
-    DBPORT: process.env.DBPORT
-};
-
-const db = pgPromise()(`postgres://${ENV.DBUSER}:postgres@localhost:${ENV.DBPORT}/${ENV.DBNAME}`);
-
-const setupDb = async () => {
-    await db.none(`
-        DROP TABLE IF EXISTS planets;
-        CREATE TABLE planets (
-            id SERIAL NOT NULL PRIMARY KEY,
-            name TEXT NOT NULL,
-            image TEXT
-        );
-    `);
-
-    await db.none(`INSERT INTO planets (name) VALUES ('Mercury');`);
-    await db.none(`INSERT INTO planets (name) VALUES ('Venus');`);
-}
-
-setupDb();
 
 const planetSchema = Joi.object({
     name: Joi.string().required()
 });
-
 
 const getAll = async (req: Request, res: Response) => {
     const planets = await db.many(`SELECT * FROM planets`);
