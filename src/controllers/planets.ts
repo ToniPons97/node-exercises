@@ -2,11 +2,7 @@ import { Request, Response } from "express";
 import Joi from "joi";
 import db from '../db.js';
 
-type JsonResponse = {
-    msg: string
-}
-
-const jsonMessage = (msg: string): JsonResponse => ({msg});
+import jsonMessage from "../jsonMessage.js";
 
 const planetSchema = Joi.object({
     name: Joi.string().required()

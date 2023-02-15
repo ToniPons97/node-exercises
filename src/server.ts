@@ -5,6 +5,7 @@ import 'express-async-errors';
 import multer from 'multer';
 
 import { getAll, getOneById, create, updateById, deleteByID, createImage } from './controllers/planets.js';
+import { logIn, signUp } from './controllers/users.js';
 
 dotenv.config();
 const port = process.env.PORT;
@@ -25,11 +26,17 @@ app.get('/', (req, res) => {
     res.status(200).json({ msg: 'Server is up!' });
 });
 
+// planets endpoints
 app.get('/api/planets', getAll);
 app.get('/api/planets/:id', getOneById);
 app.post('/api/planets', create);
 app.put('/api/planets/:id', updateById);
 app.delete('/api/planets/:id', deleteByID);
 app.post('/api/planets/:id/image', upload.single('image'), createImage);
+
+// users endpoints
+app.post('/api/users/login', logIn);
+app.post('/api/users/signup', signUp);
+
 
 app.listen(port);
