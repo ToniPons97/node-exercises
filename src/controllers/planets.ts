@@ -65,7 +65,6 @@ const createImage = async (req: Request, res: Response) => {
     }
 }
 
-
 export {
     getAll,
     getOneById,

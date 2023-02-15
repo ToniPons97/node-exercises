@@ -6,6 +6,11 @@ import jsonMessage from '../jsonMessage.js';
 
 dotenv.config();
 
+const getAllUsers = async (req: Request, res: Response) => {
+    const users = await db.many(`SELECT * FROM users`);
+    res.status(200).json(users);
+}
+
 const signUp = async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
@@ -22,11 +27,11 @@ const signUp = async (req: Request, res: Response) => {
 const logIn = async (req: Request, res: Response) => {
     const { username, password } = req.body;
 
-    const user = await db.one(`SELECT * FROM users WHERE username = $1`, username);
+    const user = await db.oneOrNone(`SELECT * FROM users WHERE username = $1`, username);
     if (user && user.password === password) {
         const payload = { id: user.id, username };
 
-        const { SECRET = '' } = process.env;
+        const SECRET: any = process.env.SECRET;
         const token = jwt.sign(payload, SECRET);
 
         await db.none(`UPDATE users SET token = $2 WHERE id = $1`, [user.id, token]);
@@ -36,7 +41,19 @@ const logIn = async (req: Request, res: Response) => {
     }    
 }
 
+const logOut = async (req: Request, res: Response) => {
+    const user: any = req.user;
+    console.log(user.id);
+
+    console.log(req);
+
+    await db.none(`UPDATE users SET token = NULL WHERE id = $1`, user?.id);
+    res.status(200).json(jsonMessage('Logout successful.'));
+}
+
 export {
     logIn,
-    signUp
+    signUp,
+    logOut,
+    getAllUsers
 }
