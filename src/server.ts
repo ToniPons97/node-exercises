@@ -2,12 +2,19 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 import morgan from 'morgan';
 import 'express-async-errors';
-import { getAll, getOneById, create, updateById, deleteByID } from './controllers/planets.js';
+import multer from 'multer';
+
+import { getAll, getOneById, create, updateById, deleteByID, createImage } from './controllers/planets.js';
 
 dotenv.config();
 const port = process.env.PORT;
 
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, './uploads'),
+    filename: (req, file, cb) => cb(null, file.originalname)
+});
+const upload = multer({ storage });
 
 const app = express();
 
@@ -23,5 +30,6 @@ app.get('/api/planets/:id', getOneById);
 app.post('/api/planets', create);
 app.put('/api/planets/:id', updateById);
 app.delete('/api/planets/:id', deleteByID);
+app.post('/api/planets/:id/image', upload.single('image'), createImage);
 
 app.listen(port);
