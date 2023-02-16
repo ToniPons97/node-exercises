@@ -43,9 +43,9 @@ const logIn = async (req: Request, res: Response) => {
 
 const logOut = async (req: Request, res: Response) => {
     const user: any = req.user;
-    console.log(user.id);
+    //console.log(user.id);
 
-    console.log(req);
+    //console.log(req);
 
     await db.none(`UPDATE users SET token = NULL WHERE id = $1`, user?.id);
     res.status(200).json(jsonMessage('Logout successful.'));
